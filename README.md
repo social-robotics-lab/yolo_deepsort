@@ -17,7 +17,6 @@ git clone https://github.com/social-robotics-lab/yolo_deepsort.git
 ## Download weights
 ```
 cd yolo_deepsort
-cd weights
 wget -P src/weights https://pjreddie.com/media/files/yolov3.weights
 wget -P src/weights https://pjreddie.com/media/files/darknet53.conv.74
 ```
