@@ -31,6 +31,6 @@ docker build -t yolo_deepsort .
 
 # Run
 ```
-docker run -it --name yolo_deepsort --mount type=bind,source="$(pwd)"/src,target=/tmp --rm yolo_deepsort /bin/bash
+docker run -it --name yolo_deepsort --mount type=bind,source="$(pwd)"/src,target=/tmp --rm --gpus all yolo_deepsort /bin/bash
 python sample.py
 ```
