@@ -17,7 +17,6 @@ git clone https://github.com/social-robotics-lab/yolo_deepsort.git
 ## Download weights
 ```
 cd yolo_deepsort
-cd weights
 wget -P src/weights https://pjreddie.com/media/files/yolov3.weights
 wget -P src/weights https://pjreddie.com/media/files/darknet53.conv.74
 ```
@@ -32,6 +31,6 @@ docker build -t yolo_deepsort .
 
 # Run
 ```
-docker run -it --name yolo_deepsort --mount type=bind,source="$(pwd)"/src,target=/tmp --rm yolo_deepsort /bin/bash
+docker run -it --name yolo_deepsort --mount type=bind,source="$(pwd)"/src,target=/tmp --rm --gpus all yolo_deepsort /bin/bash
 python sample.py
 ```
