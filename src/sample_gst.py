@@ -79,58 +79,59 @@ def main(path):
                        max_dist=0.3,
                        max_age=30)
 
-    cap = cv2.VideoCapture(path)
+    elements = [
+        'tcpclientsrc host=192.168.11.8 port=5000',
+        'application/x-rtp-stream,encoding-name=JPEG',
+        'rtpstreamdepay',
+        'rtpjpegdepay',
+        'jpegdec',
+        'videoconvert',
+        'appsink'
+    ]
+    src = ' ! '.join(elements)
+    cap = cv2.VideoCapture(src)
     class_mask = [0, 2, 4]
-    skip_frames = 10
+    skip_frames = 0
 
     fps = 0
-    prev_time = time.time()
-    frame_index = 0
-    frame_num = 0
     try:
         while True:
             _, frame = cap.read()
             if frame is None: break
 
-            # Detect once every 'skip_frames' times.
-            if frame_index % skip_frames == 0:
-                detections = detect_from_frame(frame, model, classes)
-                if detections is not None:
-                    boxs = p1p2Toxywh(detections[:, :4])
-                    class_ids = detections[:, -1]
-                    confidences = detections[:, 4]
-                    mask_set = [class_ids == mask_id for mask_id in class_mask]
-                    mask = reduce(lambda a, b: a | b, mask_set)
-                    boxs = boxs[mask]
-                    confidences = confidences[mask]
-                    class_ids = class_ids[mask]
-                    detections = tracker.update(boxs.float(), confidences, frame, class_ids)
-            else:
-                pass
+            if skip_frames > 0:
+                skip_frames = skip_frames - 1
+                continue
+
+            t_start = time.time()
+            detections = detect_from_frame(frame, model, classes)
+            if detections is not None:
+                boxs = p1p2Toxywh(detections[:, :4])
+                class_ids = detections[:, -1]
+                confidences = detections[:, 4]
+                mask_set = [class_ids == mask_id for mask_id in class_mask]
+                mask = reduce(lambda a, b: a | b, mask_set)
+                boxs = boxs[mask]
+                confidences = confidences[mask]
+                class_ids = class_ids[mask]
+                detections = tracker.update(boxs.float(), confidences, frame, class_ids)
 
             if detections is None:
                 image = frame
             else:
                 image = draw_rect_on_frame(frame, detections, classes, colors)
 
-            # Calc fps
-            curr_time = time.time()
-            if curr_time - prev_time > 1:
-                fps = frame_num
-                print('FPS:', fps, "Processing time:", round((curr_time - prev_time), 3), "sec")
-                frame_num = 0
-                prev_time = curr_time
-            else:
-                frame_num = frame_num + 1
-
             cv2.putText(image, text=f'FPS: {fps}', org=(3,15), fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                         fontScale=0.6, color=(255, 0, 0), thickness=2)
             cv2.imshow("image", image)
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 raise KeyboardInterrupt
+            t_end = time.time()
+            proc_time = t_end - t_start
+            skip_frames = int(30 * proc_time)
+            fps = round(30.0 / skip_frames, 2)
+            print(f'Processing time = {proc_time}, Skip frames = {skip_frames}, fps = {fps}')
 
-
-            frame_index = frame_index + 1
             
     except KeyboardInterrupt:
         cap.release()
