@@ -62,7 +62,7 @@ RUN cd opencv && mkdir build && cd build \
 
 RUN rm -rf opencv opencv_contrib
 
-RUN pip install imutils
+RUN pip install stomp.py
 
 ENV DISPLAY host.docker.internal:0.0
 
